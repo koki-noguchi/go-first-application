@@ -1,0 +1,5 @@
+CREATE TABLE users (
+    id VARCHAR(64) NOT NULL,
+    name VARCHAR(256) NOT NULL,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB;
