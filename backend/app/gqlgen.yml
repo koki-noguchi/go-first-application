@@ -1,6 +1,6 @@
 # Where are all the schema files located? globs are supported eg  src/**/*.graphqls
 schema:
-  - schema/*.graphqls
+  - "schema/*.graphql"
 
 # Where should the generated server code go?
 exec:
@@ -16,3 +16,10 @@ model:
 resolver:
   filename: resolver/resolver.go
   type: Resolver
+
+models:
+  Worry:
+    model: app/model.Worry
+    fields:
+      id:
+        resolver: true

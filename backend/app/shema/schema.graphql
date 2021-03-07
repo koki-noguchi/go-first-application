@@ -1,0 +1,7 @@
+type Query {
+    worries(orderBy: WorryOrderFields!, page: PaginationInput!): WorryConnection!
+}
+
+type Mutation {
+    createWorry(input: CreateWorryInput!): Worry!
+}
