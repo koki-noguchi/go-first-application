@@ -2,11 +2,9 @@ package main
 
 import (
 	"app/config"
-	"app/resolver"
 	"net/http"
 	"os"
 
-	"github.com/99designs/gqlgen/handler"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -31,15 +29,15 @@ func main() {
 		return c.NoContent(http.StatusOK)
 	})
 
-	e.POST("/graphql", func(c echo.Context) error {
-		config := resolver.Config{
-			Resolvers: resolver.New(),
-		}
-		h := handler.GraphQL(resolver.NewExecutableSchema(config))
-		h.ServeHTTP(c.Response(), c.Request())
+	// e.POST("/graphql", func(c echo.Context) error {
+	// 	config := resolver.Config{
+	// 		Resolvers: resolver.New(),
+	// 	}
+	// 	h := handler.GraphQL(resolver.NewExecutableSchema(config))
+	// 	h.ServeHTTP(c.Response(), c.Request())
 
-		return nil
-	})
+	// 	return nil
+	// })
 
 	e.HideBanner = true
 	e.HidePort = true
