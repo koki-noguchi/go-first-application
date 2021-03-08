@@ -24,7 +24,8 @@ type Query {
 }
 
 input NewWorry {
-  text: String!
+  title: String!
+  notes: String!
   user_id: String!
 }
 

@@ -7,6 +7,7 @@ type NewUser struct {
 }
 
 type NewWorry struct {
-	Text   string `json:"text"`
+	Title  string `json:"title"`
+	Notes  string `json:"notes"`
 	UserID string `json:"user_id"`
 }
