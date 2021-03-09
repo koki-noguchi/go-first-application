@@ -4,6 +4,7 @@ package graph
 // will be copied through when generating and any unknown code will be moved to the end.
 
 import (
+	"app/config"
 	"app/graph/generated"
 	"app/graph/model"
 	"app/models"
@@ -12,7 +13,19 @@ import (
 )
 
 func (r *mutationResolver) CreateWorry(ctx context.Context, input model.NewWorry) (*models.Worry, error) {
-	panic(fmt.Errorf("not implemented"))
+	db := config.DB()
+
+	worry := &models.Worry{
+		UserID: input.UserID,
+		Title:  input.Title,
+		Notes:  input.Notes,
+	}
+
+	if err := db.Create(&worry).Error; err != nil {
+		return &models.Worry{}, err
+	}
+
+	return worry, nil
 }
 
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*models.User, error) {
@@ -59,16 +72,3 @@ type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
 type worryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-// func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
-// 	panic(fmt.Errorf("not implemented"))
-// }
-// func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
-// 	panic(fmt.Errorf("not implemented"))
-// }
