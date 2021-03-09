@@ -3,11 +3,13 @@
 package model
 
 type NewUser struct {
-	Name string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Name     string `json:"name"`
 }
 
 type NewWorry struct {
 	Title  string `json:"title"`
 	Notes  string `json:"notes"`
-	UserID string `json:"user_id"`
+	UserID int    `json:"user_id"`
 }

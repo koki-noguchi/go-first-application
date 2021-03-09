@@ -6,12 +6,14 @@ type Worry {
   id: Int!
   title: String!
   notes: String!
-  user_id: String!
+  user_id: Int!
   user: User!
 }
 
 type User {
-  id: String!
+  id: Int!
+  email: String!
+  password: String!
   name: String!
   worries: [Worry!]!
 }
@@ -20,16 +22,18 @@ type Query {
   worries: [Worry!]!
   users: [User!]!
   worry(id: Int!): Worry!
-  user(id: String!): User!
+  user(id: Int!): User!
 }
 
 input NewWorry {
   title: String!
   notes: String!
-  user_id: String!
+  user_id: Int!
 }
 
 input NewUser {
+  email: String!
+  password: String!
   name: String!
 }
 
