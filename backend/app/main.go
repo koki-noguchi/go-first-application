@@ -1,9 +1,11 @@
 package main
 
 import (
+	"app/auth"
 	"app/config"
 	"app/graph"
 	"app/graph/generated"
+	jwt "app/middleware"
 	"net/http"
 	"os"
 
@@ -32,6 +34,7 @@ func main() {
 		return c.NoContent(http.StatusOK)
 	})
 
+	e.POST("/login", auth.Login())
 	e.POST("/graphql", func(c echo.Context) error {
 		config := generated.Config{
 			Resolvers: &graph.Resolver{},
@@ -40,7 +43,7 @@ func main() {
 		h.ServeHTTP(c.Response(), c.Request())
 
 		return nil
-	})
+	}, jwt.IsLoggedIn)
 
 	e.HideBanner = true
 	e.HidePort = true
