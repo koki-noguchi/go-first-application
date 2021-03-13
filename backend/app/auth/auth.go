@@ -8,7 +8,15 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
+	"golang.org/x/crypto/bcrypt"
 )
+
+func getUser(email string) models.User {
+	db := config.DB()
+	user := models.User{}
+	db.First(&user, "email=?", email)
+	return user
+}
 
 func Login() echo.HandlerFunc {
 	return func(c echo.Context) error {
@@ -16,12 +24,12 @@ func Login() echo.HandlerFunc {
 		if err := c.Bind(u); err != nil {
 			return err
 		}
+		email := u.Email
+		password := u.Password
 
-		db := config.DB()
-		user := []models.User{}
-		db.Find(&user, "email=? and password=?", u.Email, u.Password)
+		dbPassword := getUser(email).Password
 
-		if len(user) <= 0 || user[0].Email != u.Email {
+		if err := bcrypt.CompareHashAndPassword([]byte(dbPassword), []byte(password)); err != nil {
 			return echo.ErrUnauthorized
 		}
 
