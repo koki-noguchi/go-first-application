@@ -44,7 +44,7 @@ func (r *queryResolver) Worry(ctx context.Context, id int) (*models.Worry, error
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) User(ctx context.Context, id string) (*models.User, error) {
+func (r *queryResolver) User(ctx context.Context, id int) (*models.User, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
