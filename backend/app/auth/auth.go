@@ -12,20 +12,22 @@ import (
 
 func Login() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		email := c.FormValue("email")
-		password := c.FormValue("password")
+		u := new(models.User)
+		if err := c.Bind(u); err != nil {
+			return err
+		}
 
 		db := config.DB()
 		user := []models.User{}
-		db.Find(&user, "email=$1 and password=$2", email, password)
+		db.Find(&user, "email=? and password=?", u.Email, u.Password)
 
-		if len(user) <= 0 || user[0].Email == email {
+		if len(user) <= 0 || user[0].Email != u.Email {
 			return echo.ErrUnauthorized
 		}
 
 		token := jwt.New(jwt.SigningMethodHS256)
 		claims := token.Claims.(jwt.MapClaims)
-		claims["name"] = email
+		claims["name"] = u.Email
 		claims["admin"] = true
 		claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 
