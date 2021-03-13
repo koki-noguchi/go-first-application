@@ -35,6 +35,7 @@ func main() {
 	})
 
 	e.POST("/login", auth.Login())
+	e.POST("/signup", auth.SignUp())
 	e.POST("/graphql", func(c echo.Context) error {
 		config := generated.Config{
 			Resolvers: &graph.Resolver{},
