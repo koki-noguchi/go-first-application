@@ -18,22 +18,22 @@ func getUser(email string) models.User {
 	return user
 }
 
-func createUser(email string, password string, name string) error {
+func createUser(email string, password string, name string) (id int, err error) {
 	db := config.DB()
 	passwordEncrypt, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 
 	user := models.User{Email: email, Password: string(passwordEncrypt), Name: name}
 	if err := db.Create(&user).Error; err != nil {
-		return err
+		return 0, err
 	}
-	return nil
+	return user.ID, nil
 }
 
-func generateToken(email string) (t string, err error) {
+func createToken(id int, name string) (t string, err error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
-	claims["name"] = email
-	claims["admin"] = true
+	claims["uid"] = id
+	claims["name"] = name
 	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 
 	t, err = token.SignedString([]byte("secret"))
@@ -53,11 +53,12 @@ func SignUp() echo.HandlerFunc {
 		password := u.Password
 		name := u.Name
 
-		if err := createUser(email, password, name); err != nil {
+		id, err := createUser(email, password, name)
+		if err != nil {
 			return err
 		}
 
-		token, err := generateToken(email)
+		token, err := createToken(id, name)
 		if err != nil {
 			return err
 		}
@@ -77,13 +78,13 @@ func Login() echo.HandlerFunc {
 		email := u.Email
 		password := u.Password
 
-		dbPassword := getUser(email).Password
+		dbUser := getUser(email)
 
-		if err := bcrypt.CompareHashAndPassword([]byte(dbPassword), []byte(password)); err != nil {
+		if err := bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(password)); err != nil {
 			return echo.ErrUnauthorized
 		}
 
-		token, err := generateToken(email)
+		token, err := createToken(dbUser.ID, dbUser.Name)
 		if err != nil {
 			return err
 		}
