@@ -4,6 +4,7 @@ package graph
 // will be copied through when generating and any unknown code will be moved to the end.
 
 import (
+	"app/auth"
 	"app/config"
 	"app/graph/generated"
 	"app/graph/model"
@@ -13,10 +14,15 @@ import (
 )
 
 func (r *mutationResolver) CreateWorry(ctx context.Context, input model.NewWorry) (*models.Worry, error) {
+	token := ctx.Value("token").(string)
+	userID, err := auth.GetUserFromToken(token)
+	if err != nil {
+		return &models.Worry{}, err
+	}
 	db := config.DB()
 
 	worry := &models.Worry{
-		UserID: input.UserID,
+		UserID: userID,
 		Title:  input.Title,
 		Notes:  input.Notes,
 	}

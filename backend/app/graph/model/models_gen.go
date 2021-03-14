@@ -9,7 +9,6 @@ type NewUser struct {
 }
 
 type NewWorry struct {
-	Title  string `json:"title"`
-	Notes  string `json:"notes"`
-	UserID int    `json:"user_id"`
+	Title string `json:"title"`
+	Notes string `json:"notes"`
 }
