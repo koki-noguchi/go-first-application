@@ -5,7 +5,6 @@ import (
 	"app/models"
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -33,25 +32,38 @@ func createUser(email string, password string, name string) (id int, err error) 
 	return user.ID, nil
 }
 
-func createToken(id int, name string) (t string, err error) {
+func createToken(id int, name string) (map[string]string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["user_id"] = id
 	claims["name"] = name
-	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+	// FIXME: セキュリティを強固にする場合は、期限を短くする必要がある
+	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
 
-	t, err = token.SignedString([]byte("secret"))
+	t, err := token.SignedString([]byte("secret"))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return t, nil
+
+	refreshToken := jwt.New(jwt.SigningMethodHS256)
+	rtClaims := refreshToken.Claims.(jwt.MapClaims)
+	rtClaims["exp"] = time.Now().Add(time.Hour * 24).Unix()
+
+	rt, err := refreshToken.SignedString([]byte("secret"))
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]string{
+		"access_token":  t,
+		"refresh_token": rt,
+	}, nil
 }
 
 func GetUserFromToken(tokenstring string) (int, error) {
 	token, err := jwt.ParseWithClaims(tokenstring, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte("secret"), nil
 	})
-	fmt.Printf("(%%#v %#v\n", token)
 	if err != nil {
 		return 0, err
 	}
@@ -89,9 +101,7 @@ func SignUp() echo.HandlerFunc {
 			return err
 		}
 
-		return c.JSON(http.StatusOK, map[string]string{
-			"token": token,
-		})
+		return c.JSON(http.StatusOK, token)
 	}
 }
 
@@ -115,8 +125,6 @@ func Login() echo.HandlerFunc {
 			return err
 		}
 
-		return c.JSON(http.StatusOK, map[string]string{
-			"token": token,
-		})
+		return c.JSON(http.StatusOK, token)
 	}
 }
