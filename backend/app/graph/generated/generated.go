@@ -333,7 +333,6 @@ type Query {
 input NewWorry {
   title: String!
   notes: String!
-  user_id: Int!
 }
 
 input NewUser {
@@ -2267,14 +2266,6 @@ func (ec *executionContext) unmarshalInputNewWorry(ctx context.Context, obj inte
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notes"))
 			it.Notes, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "user_id":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("user_id"))
-			it.UserID, err = ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
 				return it, err
 			}

@@ -3,7 +3,11 @@ package auth
 import (
 	"app/config"
 	"app/models"
+	"context"
+	"errors"
+	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -32,7 +36,7 @@ func createUser(email string, password string, name string) (id int, err error) 
 func createToken(id int, name string) (t string, err error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
-	claims["uid"] = id
+	claims["user_id"] = id
 	claims["name"] = name
 	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 
@@ -41,6 +45,28 @@ func createToken(id int, name string) (t string, err error) {
 		return "", err
 	}
 	return t, nil
+}
+
+func GetUserFromToken(tokenstring string) (int, error) {
+	token, err := jwt.ParseWithClaims(tokenstring, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte("secret"), nil
+	})
+	fmt.Printf("(%%#v %#v\n", token)
+	if err != nil {
+		return 0, err
+	}
+	userID, ok := token.Claims.(jwt.MapClaims)["user_id"].(float64)
+	if !ok {
+		return 0, errors.New("GetUserIDFromToken error: type conversion in claims")
+	}
+
+	return int(userID), nil
+}
+
+func PassTokenToResolver(c echo.Context) context.Context {
+	token := strings.ReplaceAll(c.Request().Header.Get("Authorization"), "Bearer ", "")
+	ctx := context.WithValue(context.Background(), "token", token)
+	return ctx
 }
 
 func SignUp() echo.HandlerFunc {
