@@ -2,6 +2,25 @@
 
 package model
 
+import (
+	"app/models"
+	"fmt"
+	"io"
+	"strconv"
+)
+
+type Connection interface {
+	IsConnection()
+}
+
+type Edge interface {
+	IsEdge()
+}
+
+type Node interface {
+	IsNode()
+}
+
 type NewUser struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -11,4 +30,67 @@ type NewUser struct {
 type NewWorry struct {
 	Title string `json:"title"`
 	Notes string `json:"notes"`
+}
+
+type PageInfo struct {
+	EndCursor   string `json:"endCursor"`
+	HasNextPage bool   `json:"hasNextPage"`
+}
+
+type PaginationInput struct {
+	First *int    `json:"first"`
+	After *string `json:"after"`
+}
+
+type WorryConnection struct {
+	PageInfo *PageInfo    `json:"pageInfo"`
+	Edges    []*WorryEdge `json:"edges"`
+}
+
+func (WorryConnection) IsConnection() {}
+
+type WorryEdge struct {
+	Cursor string        `json:"cursor"`
+	Node   *models.Worry `json:"node"`
+}
+
+func (WorryEdge) IsEdge() {}
+
+type WorryOrderField string
+
+const (
+	WorryOrderFieldLatest WorryOrderField = "LATEST"
+)
+
+var AllWorryOrderField = []WorryOrderField{
+	WorryOrderFieldLatest,
+}
+
+func (e WorryOrderField) IsValid() bool {
+	switch e {
+	case WorryOrderFieldLatest:
+		return true
+	}
+	return false
+}
+
+func (e WorryOrderField) String() string {
+	return string(e)
+}
+
+func (e *WorryOrderField) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = WorryOrderField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid WorryOrderField", str)
+	}
+	return nil
+}
+
+func (e WorryOrderField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }

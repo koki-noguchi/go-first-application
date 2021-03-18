@@ -2,41 +2,16 @@
 #
 # https://gqlgen.com/getting-started/
 
-type Worry {
-  id: Int!
-  title: String!
-  notes: String!
-  user_id: Int!
-  user: User!
-}
-
-type User {
-  id: Int!
-  email: String!
-  password: String!
-  name: String!
-  worries: [Worry!]!
-}
-
 type Query {
-  worries: [Worry!]!
+  worries(orderBy: WorryOrderField!, page: PaginationInput!): WorryConnection!
   users: [User!]!
   worry(id: Int!): Worry!
   user(id: Int!): User!
-}
-
-input NewWorry {
-  title: String!
-  notes: String!
-}
-
-input NewUser {
-  email: String!
-  password: String!
-  name: String!
 }
 
 type Mutation {
   createWorry(input: NewWorry!): Worry!
   createUser(input: NewUser!): User!
 }
+
+scalar Time

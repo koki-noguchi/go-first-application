@@ -8,9 +8,11 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
@@ -51,10 +53,15 @@ type ComplexityRoot struct {
 		CreateWorry func(childComplexity int, input model.NewWorry) int
 	}
 
+	PageInfo struct {
+		EndCursor   func(childComplexity int) int
+		HasNextPage func(childComplexity int) int
+	}
+
 	Query struct {
 		User    func(childComplexity int, id int) int
 		Users   func(childComplexity int) int
-		Worries func(childComplexity int) int
+		Worries func(childComplexity int, orderBy model.WorryOrderField, page model.PaginationInput) int
 		Worry   func(childComplexity int, id int) int
 	}
 
@@ -67,11 +74,22 @@ type ComplexityRoot struct {
 	}
 
 	Worry struct {
-		ID     func(childComplexity int) int
-		Notes  func(childComplexity int) int
-		Title  func(childComplexity int) int
-		User   func(childComplexity int) int
-		UserID func(childComplexity int) int
+		CreatedAt func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Notes     func(childComplexity int) int
+		Title     func(childComplexity int) int
+		User      func(childComplexity int) int
+		UserID    func(childComplexity int) int
+	}
+
+	WorryConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	WorryEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 }
 
@@ -80,7 +98,7 @@ type MutationResolver interface {
 	CreateUser(ctx context.Context, input model.NewUser) (*models.User, error)
 }
 type QueryResolver interface {
-	Worries(ctx context.Context) ([]*models.Worry, error)
+	Worries(ctx context.Context, orderBy model.WorryOrderField, page model.PaginationInput) (*model.WorryConnection, error)
 	Users(ctx context.Context) ([]*models.User, error)
 	Worry(ctx context.Context, id int) (*models.Worry, error)
 	User(ctx context.Context, id int) (*models.User, error)
@@ -131,6 +149,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateWorry(childComplexity, args["input"].(model.NewWorry)), true
 
+	case "PageInfo.endCursor":
+		if e.complexity.PageInfo.EndCursor == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.EndCursor(childComplexity), true
+
+	case "PageInfo.hasNextPage":
+		if e.complexity.PageInfo.HasNextPage == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.HasNextPage(childComplexity), true
+
 	case "Query.user":
 		if e.complexity.Query.User == nil {
 			break
@@ -155,7 +187,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Query.Worries(childComplexity), true
+		args, err := ec.field_Query_worries_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Worries(childComplexity, args["orderBy"].(model.WorryOrderField), args["page"].(model.PaginationInput)), true
 
 	case "Query.worry":
 		if e.complexity.Query.Worry == nil {
@@ -204,6 +241,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.Worries(childComplexity), true
 
+	case "Worry.created_at":
+		if e.complexity.Worry.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.Worry.CreatedAt(childComplexity), true
+
 	case "Worry.id":
 		if e.complexity.Worry.ID == nil {
 			break
@@ -238,6 +282,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Worry.UserID(childComplexity), true
+
+	case "WorryConnection.edges":
+		if e.complexity.WorryConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.WorryConnection.Edges(childComplexity), true
+
+	case "WorryConnection.pageInfo":
+		if e.complexity.WorryConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.WorryConnection.PageInfo(childComplexity), true
+
+	case "WorryEdge.cursor":
+		if e.complexity.WorryEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.WorryEdge.Cursor(childComplexity), true
+
+	case "WorryEdge.node":
+		if e.complexity.WorryEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.WorryEdge.Node(childComplexity), true
 
 	}
 	return 0, false
@@ -303,47 +375,85 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
+	{Name: "graph/page.graphqls", Input: `type PageInfo {
+    endCursor: String!
+    hasNextPage: Boolean!
+}
+
+interface Connection {
+    pageInfo: PageInfo!
+    edges: [Edge]!
+}
+
+interface Edge {
+    cursor: String!
+    node: Node!
+}
+
+interface Node {
+    id: ID!
+}
+
+input PaginationInput {
+    first: Int
+    after: String
+}`, BuiltIn: false},
 	{Name: "graph/schema.graphqls", Input: `# GraphQL schema example
 #
 # https://gqlgen.com/getting-started/
 
-type Worry {
-  id: Int!
-  title: String!
-  notes: String!
-  user_id: Int!
-  user: User!
-}
-
-type User {
-  id: Int!
-  email: String!
-  password: String!
-  name: String!
-  worries: [Worry!]!
-}
-
 type Query {
-  worries: [Worry!]!
+  worries(orderBy: WorryOrderField!, page: PaginationInput!): WorryConnection!
   users: [User!]!
   worry(id: Int!): Worry!
   user(id: Int!): User!
 }
 
-input NewWorry {
-  title: String!
-  notes: String!
+type Mutation {
+  createWorry(input: NewWorry!): Worry!
+  createUser(input: NewUser!): User!
+}
+
+scalar Time`, BuiltIn: false},
+	{Name: "graph/user.graphqls", Input: `type User {
+  id: Int!
+  email: String!
+  password: String!
+  name: String!
+  worries: [Worry!]!
 }
 
 input NewUser {
   email: String!
   password: String!
   name: String!
+}`, BuiltIn: false},
+	{Name: "graph/worry.graphqls", Input: `type Worry implements Node {
+    id: ID!
+    title: String!
+    notes: String!
+    user_id: Int!
+    user: User!
+    created_at: Time
 }
 
-type Mutation {
-  createWorry(input: NewWorry!): Worry!
-  createUser(input: NewUser!): User!
+type WorryEdge implements Edge {
+    cursor: String!
+    node: Worry!
+}
+
+type WorryConnection implements Connection {
+    pageInfo: PageInfo!
+    edges: [WorryEdge]!
+}
+
+enum WorryOrderField {
+    LATEST
+}
+
+input NewWorry {
+  title: String!
+  notes: String!
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -409,6 +519,30 @@ func (ec *executionContext) field_Query_user_args(ctx context.Context, rawArgs m
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_worries_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.WorryOrderField
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+		arg0, err = ec.unmarshalNWorryOrderField2appᚋgraphᚋmodelᚐWorryOrderField(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["orderBy"] = arg0
+	var arg1 model.PaginationInput
+	if tmp, ok := rawArgs["page"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
+		arg1, err = ec.unmarshalNPaginationInput2appᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["page"] = arg1
 	return args, nil
 }
 
@@ -549,6 +683,76 @@ func (ec *executionContext) _Mutation_createUser(ctx context.Context, field grap
 	return ec.marshalNUser2ᚖappᚋmodelsᚐUser(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _PageInfo_endCursor(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EndCursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PageInfo_hasNextPage(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HasNextPage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_worries(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -565,9 +769,16 @@ func (ec *executionContext) _Query_worries(ctx context.Context, field graphql.Co
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_worries_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Worries(rctx)
+		return ec.resolvers.Query().Worries(rctx, args["orderBy"].(model.WorryOrderField), args["page"].(model.PaginationInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -579,9 +790,9 @@ func (ec *executionContext) _Query_worries(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*models.Worry)
+	res := resTmp.(*model.WorryConnection)
 	fc.Result = res
-	return ec.marshalNWorry2ᚕᚖappᚋmodelsᚐWorryᚄ(ctx, field.Selections, res)
+	return ec.marshalNWorryConnection2ᚖappᚋgraphᚋmodelᚐWorryConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_users(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -981,7 +1192,7 @@ func (ec *executionContext) _Worry_id(ctx context.Context, field graphql.Collect
 	}
 	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNID2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Worry_title(ctx context.Context, field graphql.CollectedField, obj *models.Worry) (ret graphql.Marshaler) {
@@ -1122,6 +1333,178 @@ func (ec *executionContext) _Worry_user(ctx context.Context, field graphql.Colle
 	res := resTmp.(*models.User)
 	fc.Result = res
 	return ec.marshalNUser2ᚖappᚋmodelsᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Worry_created_at(ctx context.Context, field graphql.CollectedField, obj *models.Worry) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Worry",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _WorryConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.WorryConnection) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "WorryConnection",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖappᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _WorryConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.WorryConnection) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "WorryConnection",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.WorryEdge)
+	fc.Result = res
+	return ec.marshalNWorryEdge2ᚕᚖappᚋgraphᚋmodelᚐWorryEdge(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _WorryEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.WorryEdge) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "WorryEdge",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _WorryEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.WorryEdge) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "WorryEdge",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Worry)
+	fc.Result = res
+	return ec.marshalNWorry2ᚖappᚋmodelsᚐWorry(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -2275,9 +2658,85 @@ func (ec *executionContext) unmarshalInputNewWorry(ctx context.Context, obj inte
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputPaginationInput(ctx context.Context, obj interface{}) (model.PaginationInput, error) {
+	var it model.PaginationInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "first":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+			it.First, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "after":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+			it.After, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
+
+func (ec *executionContext) _Connection(ctx context.Context, sel ast.SelectionSet, obj model.Connection) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.WorryConnection:
+		return ec._WorryConnection(ctx, sel, &obj)
+	case *model.WorryConnection:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._WorryConnection(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
+func (ec *executionContext) _Edge(ctx context.Context, sel ast.SelectionSet, obj model.Edge) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case model.WorryEdge:
+		return ec._WorryEdge(ctx, sel, &obj)
+	case *model.WorryEdge:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._WorryEdge(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
+func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj model.Node) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case models.Worry:
+		return ec._Worry(ctx, sel, &obj)
+	case *models.Worry:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Worry(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
 
 // endregion ************************** interface.gotpl ***************************
 
@@ -2305,6 +2764,38 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "createUser":
 			out.Values[i] = ec._Mutation_createUser(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var pageInfoImplementors = []string{"PageInfo"}
+
+func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet, obj *model.PageInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, pageInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PageInfo")
+		case "endCursor":
+			out.Values[i] = ec._PageInfo_endCursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "hasNextPage":
+			out.Values[i] = ec._PageInfo_hasNextPage(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -2461,7 +2952,7 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 	return out
 }
 
-var worryImplementors = []string{"Worry"}
+var worryImplementors = []string{"Worry", "Node"}
 
 func (ec *executionContext) _Worry(ctx context.Context, sel ast.SelectionSet, obj *models.Worry) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, worryImplementors)
@@ -2506,6 +2997,72 @@ func (ec *executionContext) _Worry(ctx context.Context, sel ast.SelectionSet, ob
 				}
 				return res
 			})
+		case "created_at":
+			out.Values[i] = ec._Worry_created_at(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var worryConnectionImplementors = []string{"WorryConnection", "Connection"}
+
+func (ec *executionContext) _WorryConnection(ctx context.Context, sel ast.SelectionSet, obj *model.WorryConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, worryConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("WorryConnection")
+		case "pageInfo":
+			out.Values[i] = ec._WorryConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "edges":
+			out.Values[i] = ec._WorryConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var worryEdgeImplementors = []string{"WorryEdge", "Edge"}
+
+func (ec *executionContext) _WorryEdge(ctx context.Context, sel ast.SelectionSet, obj *model.WorryEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, worryEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("WorryEdge")
+		case "cursor":
+			out.Values[i] = ec._WorryEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "node":
+			out.Values[i] = ec._WorryEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2777,6 +3334,21 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNID2int(ctx context.Context, v interface{}) (int, error) {
+	res, err := graphql.UnmarshalIntID(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNID2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalIntID(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -2799,6 +3371,21 @@ func (ec *executionContext) unmarshalNNewUser2appᚋgraphᚋmodelᚐNewUser(ctx 
 
 func (ec *executionContext) unmarshalNNewWorry2appᚋgraphᚋmodelᚐNewWorry(ctx context.Context, v interface{}) (model.NewWorry, error) {
 	res, err := ec.unmarshalInputNewWorry(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNPageInfo2ᚖappᚋgraphᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._PageInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNPaginationInput2appᚋgraphᚋmodelᚐPaginationInput(ctx context.Context, v interface{}) (model.PaginationInput, error) {
+	res, err := ec.unmarshalInputPaginationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -2917,6 +3504,67 @@ func (ec *executionContext) marshalNWorry2ᚖappᚋmodelsᚐWorry(ctx context.Co
 		return graphql.Null
 	}
 	return ec._Worry(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNWorryConnection2appᚋgraphᚋmodelᚐWorryConnection(ctx context.Context, sel ast.SelectionSet, v model.WorryConnection) graphql.Marshaler {
+	return ec._WorryConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNWorryConnection2ᚖappᚋgraphᚋmodelᚐWorryConnection(ctx context.Context, sel ast.SelectionSet, v *model.WorryConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._WorryConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNWorryEdge2ᚕᚖappᚋgraphᚋmodelᚐWorryEdge(ctx context.Context, sel ast.SelectionSet, v []*model.WorryEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOWorryEdge2ᚖappᚋgraphᚋmodelᚐWorryEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) unmarshalNWorryOrderField2appᚋgraphᚋmodelᚐWorryOrderField(ctx context.Context, v interface{}) (model.WorryOrderField, error) {
+	var res model.WorryOrderField
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNWorryOrderField2appᚋgraphᚋmodelᚐWorryOrderField(ctx context.Context, sel ast.SelectionSet, v model.WorryOrderField) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -3172,6 +3820,21 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return graphql.MarshalBoolean(*v)
 }
 
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return graphql.MarshalInt(*v)
+}
+
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3194,6 +3857,22 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 		return graphql.Null
 	}
 	return graphql.MarshalString(*v)
+}
+
+func (ec *executionContext) unmarshalOTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
+	res, err := graphql.UnmarshalTime(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
+	return graphql.MarshalTime(v)
+}
+
+func (ec *executionContext) marshalOWorryEdge2ᚖappᚋgraphᚋmodelᚐWorryEdge(ctx context.Context, sel ast.SelectionSet, v *model.WorryEdge) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._WorryEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

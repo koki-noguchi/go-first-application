@@ -1,0 +1,27 @@
+type Worry implements Node {
+    id: ID!
+    title: String!
+    notes: String!
+    user_id: Int!
+    user: User!
+    created_at: Time
+}
+
+type WorryEdge implements Edge {
+    cursor: String!
+    node: Worry!
+}
+
+type WorryConnection implements Connection {
+    pageInfo: PageInfo!
+    edges: [WorryEdge]!
+}
+
+enum WorryOrderField {
+    LATEST
+}
+
+input NewWorry {
+  title: String!
+  notes: String!
+}
