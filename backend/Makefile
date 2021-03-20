@@ -28,4 +28,4 @@ migrate-down:
 
 .PHONY: generate
 generate:
-	docker-compose exec app go generate ./...
+	docker-compose exec app go run github.com/99designs/gqlgen

@@ -14,3 +14,5 @@ type Worry struct {
 func (t *Worry) BeforeSave() error {
 	return validator.Struct(t)
 }
+
+func (Worry) IsNode() {}
