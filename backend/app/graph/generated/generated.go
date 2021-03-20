@@ -12,7 +12,6 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
@@ -74,12 +73,11 @@ type ComplexityRoot struct {
 	}
 
 	Worry struct {
-		CreatedAt func(childComplexity int) int
-		ID        func(childComplexity int) int
-		Notes     func(childComplexity int) int
-		Title     func(childComplexity int) int
-		User      func(childComplexity int) int
-		UserID    func(childComplexity int) int
+		ID     func(childComplexity int) int
+		Notes  func(childComplexity int) int
+		Title  func(childComplexity int) int
+		User   func(childComplexity int) int
+		UserID func(childComplexity int) int
 	}
 
 	WorryConnection struct {
@@ -240,13 +238,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.Worries(childComplexity), true
-
-	case "Worry.created_at":
-		if e.complexity.Worry.CreatedAt == nil {
-			break
-		}
-
-		return e.complexity.Worry.CreatedAt(childComplexity), true
 
 	case "Worry.id":
 		if e.complexity.Worry.ID == nil {
@@ -434,7 +425,6 @@ input NewUser {
     notes: String!
     user_id: Int!
     user: User!
-    created_at: Time
 }
 
 type WorryEdge implements Edge {
@@ -1333,38 +1323,6 @@ func (ec *executionContext) _Worry_user(ctx context.Context, field graphql.Colle
 	res := resTmp.(*models.User)
 	fc.Result = res
 	return ec.marshalNUser2ᚖappᚋmodelsᚐUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Worry_created_at(ctx context.Context, field graphql.CollectedField, obj *models.Worry) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Worry",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CreatedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _WorryConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.WorryConnection) (ret graphql.Marshaler) {
@@ -2997,8 +2955,6 @@ func (ec *executionContext) _Worry(ctx context.Context, sel ast.SelectionSet, ob
 				}
 				return res
 			})
-		case "created_at":
-			out.Values[i] = ec._Worry_created_at(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3857,15 +3813,6 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 		return graphql.Null
 	}
 	return graphql.MarshalString(*v)
-}
-
-func (ec *executionContext) unmarshalOTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
-	res, err := graphql.UnmarshalTime(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
-	return graphql.MarshalTime(v)
 }
 
 func (ec *executionContext) marshalOWorryEdge2ᚖappᚋgraphᚋmodelᚐWorryEdge(ctx context.Context, sel ast.SelectionSet, v *model.WorryEdge) graphql.Marshaler {

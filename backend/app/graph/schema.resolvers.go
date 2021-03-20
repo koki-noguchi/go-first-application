@@ -39,7 +39,20 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 }
 
 func (r *queryResolver) Worries(ctx context.Context, orderBy model.WorryOrderField, page model.PaginationInput) (*model.WorryConnection, error) {
-	panic(fmt.Errorf("not implemented"))
+	db := config.DB()
+
+	var err error
+	db, err = pageDB(db, "id", desc, page)
+	if err != nil {
+		return &model.WorryConnection{PageInfo: &model.PageInfo{}}, err
+	}
+
+	var worries []*models.Worry
+	if err := db.Find(&worries).Error; err != nil {
+		return &model.WorryConnection{PageInfo: &model.PageInfo{}}, err
+	}
+
+	return convertToConnection(worries, orderBy, page), nil
 }
 
 func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {

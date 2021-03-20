@@ -4,7 +4,6 @@ type Worry implements Node {
     notes: String!
     user_id: Int!
     user: User!
-    created_at: Time
 }
 
 type WorryEdge implements Edge {
