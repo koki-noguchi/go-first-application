@@ -34,10 +34,6 @@ func (r *mutationResolver) CreateWorry(ctx context.Context, input model.NewWorry
 	return worry, nil
 }
 
-func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*models.User, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
 func (r *queryResolver) Worries(ctx context.Context, orderBy model.WorryOrderField, page model.PaginationInput) (*model.WorryConnection, error) {
 	db := config.DB()
 

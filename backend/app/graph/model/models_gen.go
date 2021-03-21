@@ -21,12 +21,6 @@ type Node interface {
 	IsNode()
 }
 
-type NewUser struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Name     string `json:"name"`
-}
-
 type NewWorry struct {
 	Title string `json:"title"`
 	Notes string `json:"notes"`
