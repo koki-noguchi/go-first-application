@@ -10,6 +10,7 @@ import (
 	"app/graph/model"
 	"app/models"
 	"context"
+	"errors"
 	"fmt"
 )
 
@@ -35,7 +36,32 @@ func (r *mutationResolver) CreateWorry(ctx context.Context, input model.NewWorry
 }
 
 func (r *mutationResolver) UpdateWorry(ctx context.Context, input *model.UpdateWorryInput) (*models.Worry, error) {
-	panic(fmt.Errorf("not implemented"))
+	token := ctx.Value("token").(string)
+	userID, err := auth.GetUserFromToken(token)
+	if err != nil {
+		return &models.Worry{}, err
+	}
+
+	db := config.DB()
+	var worry models.Worry
+
+	if err := db.Where("id = ?", input.ID).First(&worry).Error; err != nil {
+		return &models.Worry{}, err
+	}
+	if userID != worry.UserID {
+		return &models.Worry{}, errors.New("invalid user id")
+	}
+
+	params := map[string]interface{}{}
+	params["title"] = input.Title
+	params["notes"] = input.Notes
+
+	if err := db.Model(&worry).Updates(params).Error; err != nil {
+		return &models.Worry{}, err
+	}
+
+	return &worry, nil
+
 }
 
 func (r *queryResolver) Worries(ctx context.Context, orderBy model.WorryOrderField, page model.PaginationInput) (*model.WorryConnection, error) {
