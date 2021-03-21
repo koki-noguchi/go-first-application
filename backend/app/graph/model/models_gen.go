@@ -36,6 +36,12 @@ type PaginationInput struct {
 	After *string `json:"after"`
 }
 
+type UpdateWorryInput struct {
+	ID    string `json:"id"`
+	Title string `json:"title"`
+	Notes string `json:"notes"`
+}
+
 type WorryConnection struct {
 	PageInfo *PageInfo    `json:"pageInfo"`
 	Edges    []*WorryEdge `json:"edges"`

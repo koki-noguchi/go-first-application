@@ -49,6 +49,7 @@ type DirectiveRoot struct {
 type ComplexityRoot struct {
 	Mutation struct {
 		CreateWorry func(childComplexity int, input model.NewWorry) int
+		UpdateWorry func(childComplexity int, input *model.UpdateWorryInput) int
 	}
 
 	PageInfo struct {
@@ -92,6 +93,7 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	CreateWorry(ctx context.Context, input model.NewWorry) (*models.Worry, error)
+	UpdateWorry(ctx context.Context, input *model.UpdateWorryInput) (*models.Worry, error)
 }
 type QueryResolver interface {
 	Worries(ctx context.Context, orderBy model.WorryOrderField, page model.PaginationInput) (*model.WorryConnection, error)
@@ -132,6 +134,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateWorry(childComplexity, args["input"].(model.NewWorry)), true
+
+	case "Mutation.updateWorry":
+		if e.complexity.Mutation.UpdateWorry == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateWorry_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateWorry(childComplexity, args["input"].(*model.UpdateWorryInput)), true
 
 	case "PageInfo.endCursor":
 		if e.complexity.PageInfo.EndCursor == nil {
@@ -388,6 +402,7 @@ type Query {
 
 type Mutation {
   createWorry(input: NewWorry!): Worry!
+  updateWorry(input: UpdateWorryInput): Worry!
 }
 
 scalar Time`, BuiltIn: false},
@@ -424,6 +439,12 @@ enum WorryOrderField {
 input NewWorry {
   title: String!
   notes: String!
+}
+
+input UpdateWorryInput {
+    id: ID!
+    title: String!
+    notes: String!
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -439,6 +460,21 @@ func (ec *executionContext) field_Mutation_createWorry_args(ctx context.Context,
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNNewWorry2appᚋgraphᚋmodelᚐNewWorry(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateWorry_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.UpdateWorryInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalOUpdateWorryInput2ᚖappᚋgraphᚋmodelᚐUpdateWorryInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -580,6 +616,48 @@ func (ec *executionContext) _Mutation_createWorry(ctx context.Context, field gra
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().CreateWorry(rctx, args["input"].(model.NewWorry))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Worry)
+	fc.Result = res
+	return ec.marshalNWorry2ᚖappᚋmodelsᚐWorry(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateWorry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateWorry_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateWorry(rctx, args["input"].(*model.UpdateWorryInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2531,6 +2609,42 @@ func (ec *executionContext) unmarshalInputPaginationInput(ctx context.Context, o
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateWorryInput(ctx context.Context, obj interface{}) (model.UpdateWorryInput, error) {
+	var it model.UpdateWorryInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			it.ID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "title":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			it.Title, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "notes":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notes"))
+			it.Notes, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -2604,6 +2718,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = graphql.MarshalString("Mutation")
 		case "createWorry":
 			out.Values[i] = ec._Mutation_createWorry(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateWorry":
+			out.Values[i] = ec._Mutation_updateWorry(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -3187,6 +3306,21 @@ func (ec *executionContext) marshalNID2int(ctx context.Context, sel ast.Selectio
 	return res
 }
 
+func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
+	res, err := graphql.UnmarshalID(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalID(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3690,6 +3824,14 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 		return graphql.Null
 	}
 	return graphql.MarshalString(*v)
+}
+
+func (ec *executionContext) unmarshalOUpdateWorryInput2ᚖappᚋgraphᚋmodelᚐUpdateWorryInput(ctx context.Context, v interface{}) (*model.UpdateWorryInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputUpdateWorryInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOWorryEdge2ᚖappᚋgraphᚋmodelᚐWorryEdge(ctx context.Context, sel ast.SelectionSet, v *model.WorryEdge) graphql.Marshaler {
