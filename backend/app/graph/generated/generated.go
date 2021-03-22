@@ -48,8 +48,8 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		CreateUser  func(childComplexity int, input model.NewUser) int
 		CreateWorry func(childComplexity int, input model.NewWorry) int
+		UpdateWorry func(childComplexity int, input *model.UpdateWorryInput) int
 	}
 
 	PageInfo struct {
@@ -93,7 +93,7 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	CreateWorry(ctx context.Context, input model.NewWorry) (*models.Worry, error)
-	CreateUser(ctx context.Context, input model.NewUser) (*models.User, error)
+	UpdateWorry(ctx context.Context, input *model.UpdateWorryInput) (*models.Worry, error)
 }
 type QueryResolver interface {
 	Worries(ctx context.Context, orderBy model.WorryOrderField, page model.PaginationInput) (*model.WorryConnection, error)
@@ -123,18 +123,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
-	case "Mutation.createUser":
-		if e.complexity.Mutation.CreateUser == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createUser_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateUser(childComplexity, args["input"].(model.NewUser)), true
-
 	case "Mutation.createWorry":
 		if e.complexity.Mutation.CreateWorry == nil {
 			break
@@ -146,6 +134,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateWorry(childComplexity, args["input"].(model.NewWorry)), true
+
+	case "Mutation.updateWorry":
+		if e.complexity.Mutation.UpdateWorry == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateWorry_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateWorry(childComplexity, args["input"].(*model.UpdateWorryInput)), true
 
 	case "PageInfo.endCursor":
 		if e.complexity.PageInfo.EndCursor == nil {
@@ -402,7 +402,7 @@ type Query {
 
 type Mutation {
   createWorry(input: NewWorry!): Worry!
-  createUser(input: NewUser!): User!
+  updateWorry(input: UpdateWorryInput): Worry!
 }
 
 scalar Time`, BuiltIn: false},
@@ -413,12 +413,7 @@ scalar Time`, BuiltIn: false},
   name: String!
   worries: [Worry!]!
 }
-
-input NewUser {
-  email: String!
-  password: String!
-  name: String!
-}`, BuiltIn: false},
+`, BuiltIn: false},
 	{Name: "graph/worry.graphqls", Input: `type Worry implements Node {
     id: ID!
     title: String!
@@ -444,6 +439,12 @@ enum WorryOrderField {
 input NewWorry {
   title: String!
   notes: String!
+}
+
+input UpdateWorryInput {
+    id: ID!
+    title: String!
+    notes: String!
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -452,13 +453,13 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_createWorry_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.NewUser
+	var arg0 model.NewWorry
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewUser2appᚋgraphᚋmodelᚐNewUser(ctx, tmp)
+		arg0, err = ec.unmarshalNNewWorry2appᚋgraphᚋmodelᚐNewWorry(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -467,13 +468,13 @@ func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, 
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_createWorry_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_updateWorry_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.NewWorry
+	var arg0 *model.UpdateWorryInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewWorry2appᚋgraphᚋmodelᚐNewWorry(ctx, tmp)
+		arg0, err = ec.unmarshalOUpdateWorryInput2ᚖappᚋgraphᚋmodelᚐUpdateWorryInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -631,7 +632,7 @@ func (ec *executionContext) _Mutation_createWorry(ctx context.Context, field gra
 	return ec.marshalNWorry2ᚖappᚋmodelsᚐWorry(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_createUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_updateWorry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -648,7 +649,7 @@ func (ec *executionContext) _Mutation_createUser(ctx context.Context, field grap
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_createUser_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_updateWorry_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -656,7 +657,7 @@ func (ec *executionContext) _Mutation_createUser(ctx context.Context, field grap
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateUser(rctx, args["input"].(model.NewUser))
+		return ec.resolvers.Mutation().UpdateWorry(rctx, args["input"].(*model.UpdateWorryInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -668,9 +669,9 @@ func (ec *executionContext) _Mutation_createUser(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*models.User)
+	res := resTmp.(*models.Worry)
 	fc.Result = res
-	return ec.marshalNUser2ᚖappᚋmodelsᚐUser(ctx, field.Selections, res)
+	return ec.marshalNWorry2ᚖappᚋmodelsᚐWorry(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PageInfo_endCursor(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
@@ -2552,42 +2553,6 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputNewUser(ctx context.Context, obj interface{}) (model.NewUser, error) {
-	var it model.NewUser
-	var asMap = obj.(map[string]interface{})
-
-	for k, v := range asMap {
-		switch k {
-		case "email":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			it.Email, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "password":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
-			it.Password, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "name":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			it.Name, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputNewWorry(ctx context.Context, obj interface{}) (model.NewWorry, error) {
 	var it model.NewWorry
 	var asMap = obj.(map[string]interface{})
@@ -2635,6 +2600,42 @@ func (ec *executionContext) unmarshalInputPaginationInput(ctx context.Context, o
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
 			it.After, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateWorryInput(ctx context.Context, obj interface{}) (model.UpdateWorryInput, error) {
+	var it model.UpdateWorryInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			it.ID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "title":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			it.Title, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "notes":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notes"))
+			it.Notes, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -2720,8 +2721,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "createUser":
-			out.Values[i] = ec._Mutation_createUser(ctx, field)
+		case "updateWorry":
+			out.Values[i] = ec._Mutation_updateWorry(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -3305,6 +3306,21 @@ func (ec *executionContext) marshalNID2int(ctx context.Context, sel ast.Selectio
 	return res
 }
 
+func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
+	res, err := graphql.UnmarshalID(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalID(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3318,11 +3334,6 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) unmarshalNNewUser2appᚋgraphᚋmodelᚐNewUser(ctx context.Context, v interface{}) (model.NewUser, error) {
-	res, err := ec.unmarshalInputNewUser(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNNewWorry2appᚋgraphᚋmodelᚐNewWorry(ctx context.Context, v interface{}) (model.NewWorry, error) {
@@ -3813,6 +3824,14 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 		return graphql.Null
 	}
 	return graphql.MarshalString(*v)
+}
+
+func (ec *executionContext) unmarshalOUpdateWorryInput2ᚖappᚋgraphᚋmodelᚐUpdateWorryInput(ctx context.Context, v interface{}) (*model.UpdateWorryInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputUpdateWorryInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOWorryEdge2ᚖappᚋgraphᚋmodelᚐWorryEdge(ctx context.Context, sel ast.SelectionSet, v *model.WorryEdge) graphql.Marshaler {

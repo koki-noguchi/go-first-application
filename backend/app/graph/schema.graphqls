@@ -11,7 +11,7 @@ type Query {
 
 type Mutation {
   createWorry(input: NewWorry!): Worry!
-  createUser(input: NewUser!): User!
+  updateWorry(input: UpdateWorryInput): Worry!
 }
 
 scalar Time

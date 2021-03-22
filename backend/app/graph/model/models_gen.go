@@ -21,12 +21,6 @@ type Node interface {
 	IsNode()
 }
 
-type NewUser struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Name     string `json:"name"`
-}
-
 type NewWorry struct {
 	Title string `json:"title"`
 	Notes string `json:"notes"`
@@ -40,6 +34,12 @@ type PageInfo struct {
 type PaginationInput struct {
 	First *int    `json:"first"`
 	After *string `json:"after"`
+}
+
+type UpdateWorryInput struct {
+	ID    string `json:"id"`
+	Title string `json:"title"`
+	Notes string `json:"notes"`
 }
 
 type WorryConnection struct {

@@ -24,3 +24,9 @@ input NewWorry {
   title: String!
   notes: String!
 }
+
+input UpdateWorryInput {
+    id: ID!
+    title: String!
+    notes: String!
+}

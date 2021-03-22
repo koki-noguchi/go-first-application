@@ -5,9 +5,3 @@ type User {
   name: String!
   worries: [Worry!]!
 }
-
-input NewUser {
-  email: String!
-  password: String!
-  name: String!
-}
