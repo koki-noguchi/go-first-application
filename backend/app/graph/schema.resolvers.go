@@ -105,7 +105,16 @@ func (r *queryResolver) Worry(ctx context.Context, id int) (*models.Worry, error
 }
 
 func (r *queryResolver) User(ctx context.Context, id int) (*models.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	db := config.DB()
+	var user models.User
+	if err := db.Where("id = ?", id).First(&user).Error; err != nil {
+		return nil, err
+	}
+
+	return &models.User{
+		ID:   user.ID,
+		Name: user.Name,
+	}, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.
