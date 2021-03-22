@@ -4,14 +4,31 @@ package graph
 // will be copied through when generating and any unknown code will be moved to the end.
 
 import (
+	"app/config"
 	"app/graph/generated"
 	"app/models"
 	"context"
-	"fmt"
 )
 
 func (r *userResolver) Worries(ctx context.Context, obj *models.User) ([]*models.Worry, error) {
-	panic(fmt.Errorf("not implemented"))
+	db := config.DB()
+	var worries []*models.Worry
+
+	if err := db.Where("user_id = ?", obj.ID).Find(&worries).Error; err != nil {
+		return nil, err
+	}
+
+	results := make([]*models.Worry, len(worries))
+	for i, worry := range worries {
+		results[i] = &models.Worry{
+			ID: worry.ID,
+			Title: worry.Title,
+			Notes: worry.Notes,
+			UserID: worry.UserID,
+		}
+	}
+
+	return results, nil
 }
 
 // User returns generated.UserResolver implementation.

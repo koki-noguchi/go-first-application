@@ -82,7 +82,22 @@ func (r *queryResolver) Worries(ctx context.Context, orderBy model.WorryOrderFie
 }
 
 func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	db := config.DB()
+
+	var users []*models.User
+	if err := db.Find(&users).Error; err != nil {
+		return nil, err
+	}
+
+	results := make([]*models.User, len(users))
+	for i, user := range users {
+		results[i] = &models.User{
+			ID:   user.ID,
+			Name: user.Name,
+		}
+	}
+
+	return results, nil
 }
 
 func (r *queryResolver) Worry(ctx context.Context, id int) (*models.Worry, error) {
@@ -90,7 +105,16 @@ func (r *queryResolver) Worry(ctx context.Context, id int) (*models.Worry, error
 }
 
 func (r *queryResolver) User(ctx context.Context, id int) (*models.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	db := config.DB()
+	var user models.User
+	if err := db.Where("id = ?", id).First(&user).Error; err != nil {
+		return nil, err
+	}
+
+	return &models.User{
+		ID:   user.ID,
+		Name: user.Name,
+	}, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.
