@@ -82,7 +82,22 @@ func (r *queryResolver) Worries(ctx context.Context, orderBy model.WorryOrderFie
 }
 
 func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	db := config.DB()
+
+	var users []*models.User
+	if err := db.Find(&users).Error; err != nil {
+		return nil, err
+	}
+
+	results := make([]*models.User, len(users))
+	for i, user := range users {
+		results[i] = &models.User{
+			ID:   user.ID,
+			Name: user.Name,
+		}
+	}
+
+	return results, nil
 }
 
 func (r *queryResolver) Worry(ctx context.Context, id int) (*models.Worry, error) {
