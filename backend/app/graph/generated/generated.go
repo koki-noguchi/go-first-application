@@ -49,6 +49,7 @@ type DirectiveRoot struct {
 type ComplexityRoot struct {
 	Mutation struct {
 		CreateWorry func(childComplexity int, input model.NewWorry) int
+		DeleteWorry func(childComplexity int, id int) int
 		UpdateWorry func(childComplexity int, input *model.UpdateWorryInput) int
 	}
 
@@ -94,6 +95,7 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	CreateWorry(ctx context.Context, input model.NewWorry) (*models.Worry, error)
 	UpdateWorry(ctx context.Context, input *model.UpdateWorryInput) (*models.Worry, error)
+	DeleteWorry(ctx context.Context, id int) (*models.Worry, error)
 }
 type QueryResolver interface {
 	Worries(ctx context.Context, orderBy model.WorryOrderField, page model.PaginationInput) (*model.WorryConnection, error)
@@ -134,6 +136,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateWorry(childComplexity, args["input"].(model.NewWorry)), true
+
+	case "Mutation.deleteWorry":
+		if e.complexity.Mutation.DeleteWorry == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteWorry_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteWorry(childComplexity, args["id"].(int)), true
 
 	case "Mutation.updateWorry":
 		if e.complexity.Mutation.UpdateWorry == nil {
@@ -403,6 +417,7 @@ type Query {
 type Mutation {
   createWorry(input: NewWorry!): Worry!
   updateWorry(input: UpdateWorryInput): Worry!
+  deleteWorry(id: Int!): Worry!
 }
 
 scalar Time`, BuiltIn: false},
@@ -465,6 +480,21 @@ func (ec *executionContext) field_Mutation_createWorry_args(ctx context.Context,
 		}
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteWorry_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -658,6 +688,48 @@ func (ec *executionContext) _Mutation_updateWorry(ctx context.Context, field gra
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().UpdateWorry(rctx, args["input"].(*model.UpdateWorryInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Worry)
+	fc.Result = res
+	return ec.marshalNWorry2ᚖappᚋmodelsᚐWorry(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_deleteWorry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_deleteWorry_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteWorry(rctx, args["id"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2723,6 +2795,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "updateWorry":
 			out.Values[i] = ec._Mutation_updateWorry(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deleteWorry":
+			out.Values[i] = ec._Mutation_deleteWorry(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
