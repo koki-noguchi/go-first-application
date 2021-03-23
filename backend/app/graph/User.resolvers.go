@@ -21,9 +21,9 @@ func (r *userResolver) Worries(ctx context.Context, obj *models.User) ([]*models
 	results := make([]*models.Worry, len(worries))
 	for i, worry := range worries {
 		results[i] = &models.Worry{
-			ID: worry.ID,
-			Title: worry.Title,
-			Notes: worry.Notes,
+			ID:     worry.ID,
+			Title:  worry.Title,
+			Notes:  worry.Notes,
 			UserID: worry.UserID,
 		}
 	}

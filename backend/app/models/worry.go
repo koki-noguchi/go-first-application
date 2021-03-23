@@ -4,7 +4,7 @@ import "time"
 
 type Worry struct {
 	ID        int
-	UserID    int
+	UserID    int    `json:"user_id" form:"user_id"`
 	Title     string `validate:"required,max=50"`
 	Notes     string `validate:"required,max=500"`
 	CreatedAt time.Time

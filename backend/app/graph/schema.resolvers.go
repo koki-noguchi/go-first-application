@@ -11,7 +11,6 @@ import (
 	"app/models"
 	"context"
 	"errors"
-	"fmt"
 )
 
 func (r *mutationResolver) CreateWorry(ctx context.Context, input model.NewWorry) (*models.Worry, error) {
@@ -61,7 +60,6 @@ func (r *mutationResolver) UpdateWorry(ctx context.Context, input *model.UpdateW
 	}
 
 	return &worry, nil
-
 }
 
 func (r *queryResolver) Worries(ctx context.Context, orderBy model.WorryOrderField, page model.PaginationInput) (*model.WorryConnection, error) {
@@ -101,7 +99,18 @@ func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
 }
 
 func (r *queryResolver) Worry(ctx context.Context, id int) (*models.Worry, error) {
-	panic(fmt.Errorf("not implemented"))
+	db := config.DB()
+	var worry models.Worry
+	if err := db.Where("id = ?", id).First(&worry).Error; err != nil {
+		return nil, err
+	}
+
+	return &models.Worry{
+		ID:     worry.ID,
+		Title:  worry.Title,
+		Notes:  worry.Notes,
+		UserID: worry.UserID,
+	}, nil
 }
 
 func (r *queryResolver) User(ctx context.Context, id int) (*models.User, error) {
