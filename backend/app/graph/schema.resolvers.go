@@ -62,6 +62,20 @@ func (r *mutationResolver) UpdateWorry(ctx context.Context, input *model.UpdateW
 	return &worry, nil
 }
 
+func (r *mutationResolver) DeleteWorry(ctx context.Context, id int) (*models.Worry, error) {
+	db := config.DB()
+	var worry models.Worry
+
+	if err := db.First(&worry, id).Error; err != nil {
+		return nil, err
+	}
+
+	if err := db.Delete(&worry).Error; err != nil {
+		return nil, err
+	}
+	return &worry, nil
+}
+
 func (r *queryResolver) Worries(ctx context.Context, orderBy model.WorryOrderField, page model.PaginationInput) (*model.WorryConnection, error) {
 	db := config.DB()
 
