@@ -5,7 +5,6 @@ package graph
 
 import (
 	"app/config"
-	"app/graph/generated"
 	"app/models"
 	"context"
 )
@@ -14,7 +13,7 @@ func (r *worryResolver) User(ctx context.Context, obj *models.Worry) (*models.Us
 	db := config.DB()
 
 	var user models.User
-	if err := db.Where("id = ?", obj.UserID).First(&user).Error; err != nil {
+	if err := db.Preload("Worry").Where("id = ?", obj.UserID).First(&user).Error; err != nil {
 		return nil, err
 	}
 
@@ -25,6 +24,6 @@ func (r *worryResolver) User(ctx context.Context, obj *models.Worry) (*models.Us
 }
 
 // Worry returns generated.WorryResolver implementation.
-func (r *Resolver) Worry() generated.WorryResolver { return &worryResolver{r} }
+func (r *Resolver) Worry() worryResolver { return worryResolver{r} }
 
 type worryResolver struct{ *Resolver }

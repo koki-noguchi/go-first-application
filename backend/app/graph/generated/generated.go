@@ -40,7 +40,6 @@ type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
 	User() UserResolver
-	Worry() WorryResolver
 }
 
 type DirectiveRoot struct {
@@ -77,7 +76,6 @@ type ComplexityRoot struct {
 		ID     func(childComplexity int) int
 		Notes  func(childComplexity int) int
 		Title  func(childComplexity int) int
-		User   func(childComplexity int) int
 		UserID func(childComplexity int) int
 	}
 
@@ -105,9 +103,6 @@ type QueryResolver interface {
 }
 type UserResolver interface {
 	Worries(ctx context.Context, obj *models.User) ([]*models.Worry, error)
-}
-type WorryResolver interface {
-	User(ctx context.Context, obj *models.Worry) (*models.User, error)
 }
 
 type executableSchema struct {
@@ -274,13 +269,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Worry.Title(childComplexity), true
 
-	case "Worry.user":
-		if e.complexity.Worry.User == nil {
-			break
-		}
-
-		return e.complexity.Worry.User(childComplexity), true
-
 	case "Worry.user_id":
 		if e.complexity.Worry.UserID == nil {
 			break
@@ -434,7 +422,6 @@ scalar Time`, BuiltIn: false},
     title: String!
     notes: String!
     user_id: Int!
-    user: User!
 }
 
 type WorryEdge implements Edge {
@@ -1361,41 +1348,6 @@ func (ec *executionContext) _Worry_user_id(ctx context.Context, field graphql.Co
 	res := resTmp.(int)
 	fc.Result = res
 	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Worry_user(ctx context.Context, field graphql.CollectedField, obj *models.Worry) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Worry",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Worry().User(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*models.User)
-	fc.Result = res
-	return ec.marshalNUser2ᚖappᚋmodelsᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _WorryConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.WorryConnection) (ret graphql.Marshaler) {
@@ -3002,37 +2954,23 @@ func (ec *executionContext) _Worry(ctx context.Context, sel ast.SelectionSet, ob
 		case "id":
 			out.Values[i] = ec._Worry_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				invalids++
 			}
 		case "title":
 			out.Values[i] = ec._Worry_title(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				invalids++
 			}
 		case "notes":
 			out.Values[i] = ec._Worry_notes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				invalids++
 			}
 		case "user_id":
 			out.Values[i] = ec._Worry_user_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				invalids++
 			}
-		case "user":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Worry_user(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
