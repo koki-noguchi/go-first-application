@@ -11,6 +11,7 @@ import (
 	"app/models"
 	"context"
 	"errors"
+	"fmt"
 )
 
 func (r *mutationResolver) CreateWorry(ctx context.Context, input model.NewWorry) (*models.Worry, error) {
@@ -86,7 +87,7 @@ func (r *queryResolver) Worries(ctx context.Context, orderBy model.WorryOrderFie
 	}
 
 	var worries []*models.Worry
-	if err := db.Find(&worries).Error; err != nil {
+	if err := db.Preload("User").Find(&worries).Error; err != nil {
 		return &model.WorryConnection{PageInfo: &model.PageInfo{}}, err
 	}
 
@@ -97,19 +98,12 @@ func (r *queryResolver) Users(ctx context.Context) ([]*models.User, error) {
 	db := config.DB()
 
 	var users []*models.User
-	if err := db.Find(&users).Error; err != nil {
+	if err := db.Preload("Worry").Find(&users).Error; err != nil {
 		return nil, err
 	}
+	fmt.Println(users[0].Worry)
 
-	results := make([]*models.User, len(users))
-	for i, user := range users {
-		results[i] = &models.User{
-			ID:   user.ID,
-			Name: user.Name,
-		}
-	}
-
-	return results, nil
+	return users, nil
 }
 
 func (r *queryResolver) Worry(ctx context.Context, id int) (*models.Worry, error) {

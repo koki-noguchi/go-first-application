@@ -3,7 +3,6 @@ type Worry implements Node {
     title: String!
     notes: String!
     user_id: Int!
-    user: User!
 }
 
 type WorryEdge implements Edge {
