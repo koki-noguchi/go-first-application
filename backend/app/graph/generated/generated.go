@@ -368,7 +368,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "graph/page.graphqls", Input: `type PageInfo {
+	{Name: "graph/schema/page.graphqls", Input: `type PageInfo {
     endCursor: String!
     hasNextPage: Boolean!
 }
@@ -391,7 +391,7 @@ input PaginationInput {
     first: Int
     after: String
 }`, BuiltIn: false},
-	{Name: "graph/schema.graphqls", Input: `# GraphQL schema example
+	{Name: "graph/schema/schema.graphqls", Input: `# GraphQL schema example
 #
 # https://gqlgen.com/getting-started/
 
@@ -409,7 +409,7 @@ type Mutation {
 }
 
 scalar Time`, BuiltIn: false},
-	{Name: "graph/user.graphqls", Input: `type User {
+	{Name: "graph/schema/user.graphqls", Input: `type User {
   id: Int!
   email: String!
   password: String!
@@ -417,7 +417,7 @@ scalar Time`, BuiltIn: false},
   worries: [Worry!]!
 }
 `, BuiltIn: false},
-	{Name: "graph/worry.graphqls", Input: `type Worry implements Node {
+	{Name: "graph/schema/worry.graphqls", Input: `type Worry implements Node {
     id: ID!
     title: String!
     notes: String!
