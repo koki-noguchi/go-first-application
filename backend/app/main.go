@@ -3,8 +3,8 @@ package main
 import (
 	"app/auth"
 	"app/config"
-	"app/graph"
 	"app/graph/generated"
+	"app/graph/resolver"
 	jwt "app/middleware"
 
 	"net/http"
@@ -42,7 +42,7 @@ func main() {
 	e.POST("/graphql", func(c echo.Context) error {
 		ctx := auth.PassTokenToResolver(c)
 		config := generated.Config{
-			Resolvers: &graph.Resolver{},
+			Resolvers: &resolver.Resolver{},
 		}
 		h := handler.GraphQL(generated.NewExecutableSchema(config))
 		h.ServeHTTP(c.Response(), c.Request().WithContext(ctx))
