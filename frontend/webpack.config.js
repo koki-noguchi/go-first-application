@@ -3,15 +3,17 @@ const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
-  entry: "./src/index.tsx",
+  entry: {
+    'js/app': ['./src/index.tsx'],
+  },
   output: {
-    path: path.join(__dirname, "/dist"),
+    path: path.resolve(__dirname, 'dist/'),
     publicPath: "/",
-    filename: "[hash].js"
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: "src/html/index.html"
+      template: "src/html/index.html",
+      filename: 'index.html',
     })
   ],
   resolve: {
@@ -53,7 +55,7 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        loaders: ["style-loader", "css-loader?modules"]
+        use: ["style-loader", "css-loader?modules"]
       }
     ]
   }
