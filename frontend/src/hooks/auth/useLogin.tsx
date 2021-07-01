@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
-import { LoginInfo } from '../../types/auth/loginInfo';
+import { UserInfo } from '../../types/auth/userInfo';
 
 export const useLogin = () => {
-    const login = useCallback((props: LoginInfo) => {
+    const login = useCallback((props: UserInfo) => {
         const {email, password} = props
         console.log([email, password]);
     }, [])
