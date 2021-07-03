@@ -1,14 +1,24 @@
-import React, { VFC } from "react";
-import { useLogin } from '../../hooks/auth/useLogin';
-import { AuthCard } from '../organisms/auth/AuthCard';
-import { Link } from "react-router-dom";
+import React, { FC, useEffect, useState } from "react";
+import { useHistory, Link } from "react-router-dom";
 
-export const SignUpPage: VFC = () => {
-    const { login } = useLogin();
+import { useSignUp } from "../../hooks/auth/useSignUp";
+import { AuthCard } from '../organisms/auth/AuthCard';
+import { auth } from '../../base'
+
+export const SignUpPage: FC = () => {
+    const { signUp } = useSignUp();
+    const history = useHistory();
+
+    useEffect(() => {
+        auth.onAuthStateChanged((user) => {
+          user && history.push('/')
+        })
+      }, [])
+
     return (
         <>
-            <Link to="/">login</Link>
-            <AuthCard headerName="サインアップ" buttonName="登録" onClickButton={login}></AuthCard>
+            <Link to="/login">login</Link>
+            <AuthCard headerName="サインアップ" buttonName="登録" onClickButton={signUp}></AuthCard>
         </>
     )
 }
