@@ -1,5 +1,4 @@
-import React, { useState, ChangeEvent, useEffect } from "react";
-import { Grid, Header, Segment, Form } from 'semantic-ui-react';
+import React, { useEffect } from "react";
 import { useLogin } from '../../hooks/auth/useLogin';
 import { AuthCard } from '../organisms/auth/AuthCard';
 import { Link, useHistory } from "react-router-dom";
