@@ -3,11 +3,9 @@ package middleware
 import (
 	"context"
 	"log"
-	"os"
 	"strings"
 
-	firebase "firebase.google.com/go"
-	"github.com/joho/godotenv"
+	firebase "firebase.google.com/go/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"google.golang.org/api/option"
@@ -18,12 +16,7 @@ var IsLoggedIn = middleware.JWTWithConfig(middleware.JWTConfig{
 })
 
 func AuthMiddleware(c echo.Context) {
-	err := godotenv.Load(".env")
-	if err != nil {
-		panic("Error loading .env file")
-	}
-
-	opt := option.WithCredentialsFile(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"))
+	opt := option.WithCredentialsFile("./go-first-application-firebase-adminsdk.json")
 	app, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {
 		log.Fatalf("error initializing app: %v\n", err)
