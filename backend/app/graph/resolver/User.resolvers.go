@@ -7,7 +7,12 @@ import (
 	"app/graph/generated"
 	"app/models"
 	"context"
+	"fmt"
 )
+
+func (r *userResolver) ID(ctx context.Context, obj *models.User) (int, error) {
+	panic(fmt.Errorf("not implemented"))
+}
 
 func (r *userResolver) Worries(ctx context.Context, obj *models.User) ([]*models.Worry, error) {
 	results := make([]*models.Worry, len(obj.Worry))

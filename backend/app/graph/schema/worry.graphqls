@@ -2,7 +2,7 @@ type Worry implements Node {
     id: ID!
     title: String!
     notes: String!
-    user_id: Int!
+    user_id: String!
 }
 
 type WorryEdge implements Edge {

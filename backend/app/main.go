@@ -1,6 +1,7 @@
 package main
 
 import (
+	"app/auth"
 	"app/config"
 	"app/graph/generated"
 	"app/graph/resolver"
@@ -32,11 +33,13 @@ func main() {
 	// graphqlは認証済みユーザーのみ叩ける
 	e.POST("/graphql", func(c echo.Context) error {
 		jwt.AuthMiddleware(c)
+		ctx := auth.PassTokenToResolver(c)
+
 		config := generated.Config{
 			Resolvers: &resolver.Resolver{},
 		}
 		h := handler.GraphQL(generated.NewExecutableSchema(config))
-		h.ServeHTTP(c.Response(), c.Request())
+		h.ServeHTTP(c.Response(), c.Request().WithContext(ctx))
 
 		return nil
 	})
