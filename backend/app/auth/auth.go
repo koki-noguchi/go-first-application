@@ -5,6 +5,7 @@ import (
 	"app/models"
 	"context"
 	"errors"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -62,13 +63,13 @@ func createToken(id string, name string) (map[string]string, error) {
 
 func GetUserFromToken(tokenstring string) (string, error) {
 	token, err := jwt.ParseWithClaims(tokenstring, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
+		log.Println(token.Claims.(jwt.MapClaims)["user_id"])
 		return []byte("secret"), nil
 	})
-	if err != nil {
-		return "", err
-	}
+	log.Println(token.Claims.(jwt.MapClaims)["user_id"])
 	userID, ok := token.Claims.(jwt.MapClaims)["user_id"].(string)
 	if !ok {
+		log.Println(err)
 		return "", errors.New("GetUserIDFromToken error: type conversion in claims")
 	}
 
