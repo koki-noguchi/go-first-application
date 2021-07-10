@@ -5,6 +5,7 @@ import (
 	"app/models"
 	"context"
 	"errors"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -21,18 +22,18 @@ func getUser(email string) models.User {
 	return user
 }
 
-func createUser(email string, password string, name string) (id int, err error) {
+func createUser(email string, password string, name string) (id string, err error) {
 	db := config.DB()
 	passwordEncrypt, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 
 	user := models.User{Email: email, Password: string(passwordEncrypt), Name: name}
 	if err := db.Create(&user).Error; err != nil {
-		return 0, err
+		return "", err
 	}
 	return user.ID, nil
 }
 
-func createToken(id int, name string) (map[string]string, error) {
+func createToken(id string, name string) (map[string]string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["user_id"] = id
@@ -60,19 +61,19 @@ func createToken(id int, name string) (map[string]string, error) {
 	}, nil
 }
 
-func GetUserFromToken(tokenstring string) (int, error) {
+func GetUserFromToken(tokenstring string) (string, error) {
 	token, err := jwt.ParseWithClaims(tokenstring, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
+		log.Println(token.Claims.(jwt.MapClaims)["user_id"])
 		return []byte("secret"), nil
 	})
-	if err != nil {
-		return 0, err
-	}
-	userID, ok := token.Claims.(jwt.MapClaims)["user_id"].(float64)
+	log.Println(token.Claims.(jwt.MapClaims)["user_id"])
+	userID, ok := token.Claims.(jwt.MapClaims)["user_id"].(string)
 	if !ok {
-		return 0, errors.New("GetUserIDFromToken error: type conversion in claims")
+		log.Println(err)
+		return "", errors.New("GetUserIDFromToken error: type conversion in claims")
 	}
 
-	return int(userID), nil
+	return userID, nil
 }
 
 func PassTokenToResolver(c echo.Context) context.Context {

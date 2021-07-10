@@ -12,11 +12,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 )
 
 func (r *mutationResolver) CreateWorry(ctx context.Context, input model.NewWorry) (*models.Worry, error) {
 	token := ctx.Value("token").(string)
 	userID, err := auth.GetUserFromToken(token)
+	log.Println(userID)
+
 	if err != nil {
 		return &models.Worry{}, err
 	}

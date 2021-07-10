@@ -1,2 +1,4 @@
 app/app
 db/mysql/data
+.env
+go-first-application-firebase-adminsdk.json
