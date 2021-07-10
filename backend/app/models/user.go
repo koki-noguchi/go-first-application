@@ -1,11 +1,13 @@
 package models
 
+import "time"
+
 type User struct {
-	ID       string `json:"id" form:"id"`
-	Email    string `json:"email" form:"email" validate:"required,email"`
-	Password string `json:"password" form:"password" validate:"required,min=8,max=72,excludesall=!()#@{}"`
-	Name     string `json:"name" form:"name" validate:"required,max=15"`
-	Worry    []Worry
+	ID        string `json:"id" form:"id"`
+	Name      string `json:"name" form:"name" validate:"required,max=15"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Worry     []Worry
 }
 
 func (t *User) BeforeSave() error {
