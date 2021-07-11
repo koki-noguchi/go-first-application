@@ -6,27 +6,24 @@ import (
 	"context"
 	"errors"
 	"log"
-	"net/http"
 	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
-	"golang.org/x/crypto/bcrypt"
 )
 
-func getUser(email string) models.User {
+func getUser(id string) models.User {
 	db := config.DB()
 	user := models.User{}
-	db.First(&user, "email=?", email)
+	db.First(&user, "id=?", id)
 	return user
 }
 
-func createUser(email string, password string, name string) (id string, err error) {
+func createUser(id string, name string) (user_id string, err error) {
 	db := config.DB()
-	passwordEncrypt, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 
-	user := models.User{Email: email, Password: string(passwordEncrypt), Name: name}
+	user := models.User{ID: id, Name: name}
 	if err := db.Create(&user).Error; err != nil {
 		return "", err
 	}
@@ -80,52 +77,4 @@ func PassTokenToResolver(c echo.Context) context.Context {
 	token := strings.ReplaceAll(c.Request().Header.Get("Authorization"), "Bearer ", "")
 	ctx := context.WithValue(context.Background(), "token", token)
 	return ctx
-}
-
-func SignUp() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		u := new(models.User)
-		if err := c.Bind(u); err != nil {
-			return err
-		}
-		email := u.Email
-		password := u.Password
-		name := u.Name
-
-		id, err := createUser(email, password, name)
-		if err != nil {
-			return err
-		}
-
-		token, err := createToken(id, name)
-		if err != nil {
-			return err
-		}
-
-		return c.JSON(http.StatusOK, token)
-	}
-}
-
-func Login() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		u := new(models.User)
-		if err := c.Bind(u); err != nil {
-			return err
-		}
-		email := u.Email
-		password := u.Password
-
-		dbUser := getUser(email)
-
-		if err := bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(password)); err != nil {
-			return echo.ErrUnauthorized
-		}
-
-		token, err := createToken(dbUser.ID, dbUser.Name)
-		if err != nil {
-			return err
-		}
-
-		return c.JSON(http.StatusOK, token)
-	}
 }
