@@ -27,6 +27,8 @@ export const Home = () => {
         <br></br>
         <Link to="/signup">signup</Link>
         <div>Homeです。</div>
+        <Link to="/create_worry">worry</Link>
+        <br></br>
         <button onClick={logout}>ログアウト</button>
         </>
     )
