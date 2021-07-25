@@ -1,0 +1,17 @@
+fragment worryFields on Worry {
+    id
+    user_id
+    title
+    notes
+}
+
+mutation createWorry(
+    $title: String!
+    $notes: String!
+) {
+    createWorry(
+        input: {title: $title, notes: $notes}
+    ) {
+        ...worryFields
+    }
+}

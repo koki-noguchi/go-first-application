@@ -1,5 +1,7 @@
 schema:
-  - http://localhost:3000/graphql
+  - http://localhost:3000/graphql:
+      headers:
+        authorization: "${API_TOKEN}"
 documents: ["query.graphql"]
 generates:
   ./src/generated/graphql.ts:
