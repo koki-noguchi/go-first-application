@@ -21,3 +21,5 @@ Go・Graphqlの勉強用リポジトリです。
 - React
 - TypeScript
 - semantic-ui
+- Apollo
+- graphql-code-generator
