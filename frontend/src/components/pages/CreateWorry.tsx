@@ -54,7 +54,7 @@ export const CreateWorry = () => {
 
 const SForm = styled(Form)`
     width: 80vh;
-    height: 80vh;
+    height: 81vh;
     background-color: #fff;
     padding: 15px;
     border-radius: 10px;
