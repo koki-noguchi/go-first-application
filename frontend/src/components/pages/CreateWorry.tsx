@@ -30,22 +30,22 @@ export const CreateWorry = () => {
         <Link to='/'>home</Link>
         <SDiv>
             <SForm onSubmit={handleSubmit}>
-                <Form.Field>
-                    <label>タイトル</label>
+                <SFormField>
+                    <SLabel>タイトル</SLabel>
                     <input value={title} onChange={onChangeTitle} placeholder='心配事・不安・嫌だったことを一言で表すと？' />
-                </Form.Field>
-                <Form.Field>
-                    <label>心配事・不安・嫌だったこと</label>
+                </SFormField>
+                <SFormField>
+                    <SLabel>心配事・不安・嫌だったこと</SLabel>
                     <textarea
                         value={note}
                         onChange={onChangeNote}
                         style={{height: '50vh', resize: 'none'}}
-                        placeholder='今日１日にどんな心配事・不安・嫌だったことがありましたか？例えば、発表会で失敗しないか不安だった・自分のミスで先輩に迷惑をかけて凹んだといったように。'
+                        placeholder='今日１日にどんな心配事・不安・嫌だったことがありましたか？例えば、「発表会で失敗しないか不安だった・自分のミスで先輩に迷惑をかけて凹んだ」といったように。'
                     ></textarea>
-                </Form.Field>
-                <div>
+                </SFormField>
+                <SDivButton>
                     <Button type='submit'>Submit</Button>
-                </div>
+                </SDivButton>
             </SForm>
         </SDiv>
         </>
@@ -53,10 +53,17 @@ export const CreateWorry = () => {
 }
 
 const SForm = styled(Form)`
-    width: 70vh;
-    background-color: #CCFFCC;
+    width: 80vh;
+    height: 80vh;
+    background-color: #fff;
     padding: 15px;
     border-radius: 10px;
+    border: 1px solid #333399;
+    font-size: 18px !important;
+`
+
+const SFormField = styled(Form.Field)`
+    text-align: center;
 `
 
 const SDiv = styled.div`
@@ -64,4 +71,14 @@ const SDiv = styled.div`
     justify-content: center;
     align-items: center;
     height: 90vh;
+`
+
+const SDivButton = styled.div`
+    text-align: center;
+`
+
+const SLabel = styled.label`
+    margin-bottom: 12px !important;
+    border-bottom: 1px solid;
+    padding-bottom: 8px;
 `
