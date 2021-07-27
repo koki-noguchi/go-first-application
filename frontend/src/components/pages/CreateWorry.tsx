@@ -32,7 +32,7 @@ export const CreateWorry = () => {
             <SForm onSubmit={handleSubmit}>
                 <SFormField>
                     <SLabel>タイトル</SLabel>
-                    <input value={title} onChange={onChangeTitle} placeholder='心配事・不安・嫌だったことを一言で表すと？' />
+                    <input value={title} onChange={onChangeTitle} placeholder='今日１日にタイトルをつけるとしたら？' />
                 </SFormField>
                 <SFormField>
                     <SLabel>心配事・不安・嫌だったこと</SLabel>
