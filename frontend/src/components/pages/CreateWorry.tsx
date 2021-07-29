@@ -40,7 +40,7 @@ export const CreateWorry = () => {
                         value={note}
                         onChange={onChangeNote}
                         style={{height: '50vh', resize: 'none'}}
-                        placeholder='今日１日にどんな心配事・不安・嫌だったことがありましたか？例えば、「発表会で失敗しないか不安だった・自分のミスで先輩に迷惑をかけて凹んだ」といったように。'
+                        placeholder='どんな心配事・不安・つらかったことがありましたか？例えば、「発表会で失敗しないか不安だった・自分のミスで先輩に迷惑をかけて凹んだ」といったように。'
                     ></textarea>
                 </SFormField>
                 <SDivButton>
