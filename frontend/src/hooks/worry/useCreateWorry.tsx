@@ -1,20 +1,23 @@
 import { FormEvent } from "react";
 import { NewWorry, useCreateWorryMutation } from "../../generated/graphql";
 
-export const useCreateWorry = (props: NewWorry) => {
-    const { title, notes } = props;
+export const useCreateWorry = () => {
+    const [createWorry] = useCreateWorryMutation();
 
-    const [createWorry] = useCreateWorryMutation({
-        variables: {
-            title: title,
-            notes: notes
-        }
-    });
-
-    const handleSubmit = (e: FormEvent) => {
-        e.preventDefault();
-        createWorry();
+    const create = (props: NewWorry) => {
+        const {title, notes} = props;
+        createWorry({
+            variables: {
+                title: title,
+                notes: notes
+            }
+        });
     }
 
-    return [handleSubmit];
+    const handleSubmit = (props: NewWorry, e: FormEvent) => {
+        e.preventDefault();
+        create(props);
+    }
+
+    return {handleSubmit};
 }

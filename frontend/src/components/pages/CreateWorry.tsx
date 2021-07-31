@@ -2,34 +2,24 @@ import React, { ChangeEvent, FormEvent, useState } from 'react';
 import styled from 'styled-components'
 import { Link } from 'react-router-dom';
 import { Button, Form } from 'semantic-ui-react';
-import { useCreateWorryMutation } from '../../generated/graphql';
-import firebase from 'firebase';
+import { useCreateWorry } from '../../hooks/worry/useCreateWorry';
 
 
 export const CreateWorry = () => {
     const [title, setTitle] = useState('');
-    const [note, setNote] = useState('');
+    const [notes, setNote] = useState('');
 
     const onChangeTitle = (e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value);
     const onChangeNote = (e: ChangeEvent<HTMLTextAreaElement>) => setNote(e.target.value);
 
-    const [createWorry] = useCreateWorryMutation({
-        variables: {
-            title: title,
-            notes: note
-        }
-    });
-
-    const handleSubmit = (e: FormEvent) => {
-        e.preventDefault();
-        createWorry();
-    }
+    const { handleSubmit } = useCreateWorry();
+    const onClickSubmit = (e: FormEvent) => handleSubmit({title, notes}, e);
 
     return (
         <>
         <Link to='/'>home</Link>
         <SDiv>
-            <SForm onSubmit={handleSubmit}>
+            <SForm onSubmit={onClickSubmit}>
                 <SFormField>
                     <SLabel>タイトル</SLabel>
                     <input value={title} onChange={onChangeTitle} placeholder='今日１日にタイトルをつけるとしたら？' />
@@ -37,7 +27,7 @@ export const CreateWorry = () => {
                 <SFormField>
                     <SLabel>心配事・不安・嫌だったこと</SLabel>
                     <textarea
-                        value={note}
+                        value={notes}
                         onChange={onChangeNote}
                         style={{height: '50vh', resize: 'none'}}
                         placeholder='どんな心配事・不安・つらかったことがありましたか？例えば、「発表会で失敗しないか不安だった・自分のミスで先輩に迷惑をかけて凹んだ」といったように。'
