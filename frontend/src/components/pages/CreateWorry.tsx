@@ -8,12 +8,17 @@ import { useCreateWorry } from '../../hooks/worry/useCreateWorry';
 export const CreateWorry = () => {
     const [title, setTitle] = useState('');
     const [notes, setNote] = useState('');
+    const [loading, setLoading] = useState(false);
 
     const onChangeTitle = (e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value);
     const onChangeNote = (e: ChangeEvent<HTMLTextAreaElement>) => setNote(e.target.value);
 
     const { handleSubmit } = useCreateWorry();
-    const onClickSubmit = (e: FormEvent) => handleSubmit({title, notes}, e);
+    const onClickSubmit = (e: FormEvent) => {
+        setLoading(true);
+        handleSubmit({title, notes}, e);
+        setLoading(false);
+    };
 
     return (
         <>
@@ -34,7 +39,7 @@ export const CreateWorry = () => {
                     ></textarea>
                 </SFormField>
                 <SDivButton>
-                    <Button type='submit'>Submit</Button>
+                    <Button loading={loading} type='submit' disabled={title === '' || notes === ''}>Submit</Button>
                 </SDivButton>
             </SForm>
         </SDiv>
