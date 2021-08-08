@@ -52,6 +52,7 @@
     "@apollo/client": "^3.3.21",
     "@types/styled-components": "^5.1.11",
     "axios": "^0.21.1",
+    "dayjs": "^1.10.6",
     "file-loader": "^6.2.0",
     "firebase": "^8.7.0",
     "graphql": "^15.5.1",
