@@ -6,9 +6,10 @@ import { Link, useHistory } from "react-router-dom";
 import { List } from "semantic-ui-react";
 
 export const Home = () => {
-    const month = dayjs().format('MM');
+    const month = dayjs().format('YYYY年MM月');
     const today = dayjs().format('DD');
     const startOfWeek = dayjs().startOf('week');
+    const [selectedDate, setSelectedDate] = useState(today);
 
     const generateWeekList = () => {
         let weekList = [];
@@ -22,7 +23,6 @@ export const Home = () => {
     }
 
     const week = generateWeekList();
-    console.log(week);
 
     const history = useHistory();
     const logout = async () => {
@@ -34,21 +34,44 @@ export const Home = () => {
         }
     }
 
+    const demoTrainingHistory = {
+            training: {
+                0: {
+                    type: '自分への優しさ',
+                    title: '緊張した...',
+                    url: '/worry/1'
+                },
+            }
+    }
+
+    const onClickDate = (day: string) => {
+        setSelectedDate(day);
+    }
+
     return (
         <>
-        <Link to="/login">login</Link>
+        {/* <Link to="/login">login</Link>
         <br></br>
         <Link to="/signup">signup</Link>
         <Link to="/create_worry">worry</Link>
         <br></br>
-        <button onClick={logout}>ログアウト</button>
+        <button onClick={logout}>ログアウト</button> */}
         <SDiv>
+            <SDivMonth>{month}</SDivMonth>
             <List horizontal>
-                {week.map((day) => (
-                    <List.Item>
-                        <SListContent today={today} day={day}>{day}</SListContent>
+                {week.map((day, key) => (
+                    <List.Item　key={key}>
+                        <SListContent as='button' selectedDate={selectedDate} day={day} onClick={() => onClickDate(day)}>{day}</SListContent>
                     </List.Item>
                 ))}
+                <SDivDemo>
+                    <h2>History</h2>
+                    <List bulleted>
+                        <SListItem>test</SListItem>
+                        <SListItem>test</SListItem>
+                        <SListItem>test</SListItem>
+                    </List>
+                </SDivDemo>
             </List>
         </SDiv>
         </>
@@ -59,11 +82,28 @@ const SDiv = styled.div`
     text-align: center;
 `
 
+const SDivMonth = styled.div`
+    font-size: 1.8rem;
+    margin: 25px 0;
+`
+
 const SListContent = styled(List.Content)`
     font-size: 2em;
     border: 0px solid;
     padding: 8px;
-    border-radius: ${props => props.today === props.day && '50%'};
-    background-color: ${props => props.today === props.day && '#FF8C00'};
-    color: ${props => props.today === props.day && 'white'};
+    border-radius: ${props => props.selectedDate === props.day && '50%'};
+    background: ${props => props.selectedDate === props.day && '#FF8C00' || 'none'};
+    color: ${props => props.selectedDate === props.day && 'white'};
+    cursor: pointer;
+`
+const SDivDemo = styled.div`
+    margin-top: 50px;
+    padding: 20px;
+    width: 500px;
+    height: 300px;
+    background-color: white;
+`
+
+const SListItem = styled(List.Item)`
+    text-align: left;
 `
