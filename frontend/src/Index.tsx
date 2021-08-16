@@ -39,7 +39,7 @@ export default function App() {
         <ApolloProvider client={client}>
             <BrowserRouter>
                 <Router></Router>
-                    <AuthRouter></AuthRouter>
+                <AuthRouter></AuthRouter>
             </BrowserRouter>
         </ApolloProvider>
     )
