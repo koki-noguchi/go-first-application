@@ -58,7 +58,7 @@ export const Home = () => {
         <button onClick={logout}>ログアウト</button> */}
         <SDiv>
             <SDivMonth>{month}</SDivMonth>
-            <List horizontal>
+            <List horizontal style={{width: '100%'}}>
                 {week.map((day, key) => (
                     <List.Item　key={key}>
                         <SListContent as='button' selectedDate={selectedDate} day={day} onClick={() => onClickDate(day)}>{day}</SListContent>
@@ -84,11 +84,11 @@ const SDiv = styled.div`
 
 const SDivMonth = styled.div`
     font-size: 1.8rem;
-    margin: 25px 0;
+    margin: 65px 0 20px 0;
 `
 
 const SListContent = styled(List.Content)`
-    font-size: 2em;
+    font-size: 1.6em;
     border: 0px solid;
     padding: 8px;
     border-radius: ${props => props.selectedDate === props.day && '50%'};
@@ -99,9 +99,10 @@ const SListContent = styled(List.Content)`
 const SDivDemo = styled.div`
     margin-top: 50px;
     padding: 20px;
-    width: 500px;
+    max-width: 500px;
     height: 300px;
     background-color: white;
+    margin: 50px auto;
 `
 
 const SListItem = styled(List.Item)`
