@@ -1,40 +1,39 @@
 import React, { FC } from 'react';
 import { Link } from 'react-router-dom';
-import { Checkbox, Grid, Icon, Menu, Segment, Sidebar } from 'semantic-ui-react';
+import { Grid, Icon, Menu, Segment, Sidebar } from 'semantic-ui-react';
 import styled from 'styled-components';
 
 export const SidebarLayout: FC = ({children}) => {
-    const [visible, setVisible] = React.useState(true);
+    const [visible, setVisible] = React.useState(window.innerWidth >= 768);
 
     return (
         <SGrid columns={1}>
             <Grid.Column style={{padding: '0px'}}>
-                <Sidebar.Pushable as={Segment} style={{background: 'none', border: 'none', boxShadow: 'none'}}>
+                <SIcon
+                    name='bars'
+                    onClick={() => setVisible(!visible)}
+                    color={'blue'}
+                    size={'large'}
+                    visible={visible ? 1 : 0}
+                />
+                <Sidebar.Pushable as={Segment} style={{background: 'none', border: 'none', boxShadow: 'none', margin: '0px'}}>
                     <Sidebar
                         as={Menu}
                         animation='overlay'
-                        onHide={() => setVisible(false)}
                         icon='labeled'
                         inverted
                         vertical
                         visible={visible}
-                        width='thin'
+                        style={{maxWidth: '110px'}}
                     >
-                        <SIcon
-                        name='bars'
-                        onClick={() => setVisible(!visible)}
-                        color={'blue'}
-                        size={'large'}
-                        style={{marginTop: '30px'}}
-                        />
-                        <SMenuItem to='/'>
-                            <Menu.Item as='a'>
-                                <Icon name='home' />
+                        <Link to='/'>
+                            <Menu.Item  style={{marginTop: '35px'}} >
+                                <Icon name='home'  />
                                 Home
                             </Menu.Item>
-                        </SMenuItem>
+                        </Link>
                         <Link to='/create_worry'>
-                            <Menu.Item as='a'>
+                            <Menu.Item >
                                 <Icon name='handshake outline' />
                                 Self Compassion
                             </Menu.Item>
@@ -52,19 +51,18 @@ export const SidebarLayout: FC = ({children}) => {
     )
 }
 
-const SSideber = styled(Sidebar.Pushable)`
-    background: none;
-    border: none;
-`
-
 const SGrid = styled(Grid)`
     height: 100vh;
+    margin: 0px !important;
 `
 
 const SIcon = styled(Icon)`
+    display: none !important;
+    position: absolute;
+    z-index: 1;
     cursor: pointer;
-`
-
-const SMenuItem = styled(Menu.Item)`
-    margin-top: 20px;
+    @media (max-width: 768px) {
+        display: block !important;
+    }
+    transform: ${props => props.visible && 'rotate(90deg)'};
 `
