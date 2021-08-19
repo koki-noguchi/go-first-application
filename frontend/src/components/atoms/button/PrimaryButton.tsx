@@ -1,4 +1,4 @@
-import React, { ReactNode, memo, VFC } from "react";
+import React, { ReactNode, memo, FC } from "react";
 import { Button } from 'semantic-ui-react';
 
 type Props = {
@@ -6,8 +6,8 @@ type Props = {
   disabled: boolean;
   onClick: () => void;
 }
-
-export const PrimaryButton: VFC<Props> = memo((props) => {
+// eslint-disable-next-line react/display-name
+export const PrimaryButton: FC<Props> = memo((props: Props) => {
   const { children, disabled = false, onClick } = props;
 
   return (
