@@ -1,18 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { FC, useState } from "react";
 import dayjs from 'dayjs';
 import styled from 'styled-components'
-import { auth } from "../../base";
-import { Link, useHistory } from "react-router-dom";
+// import { auth } from "../../base";
+// import { useHistory } from "react-router-dom";
 import { List } from "semantic-ui-react";
 
-export const Home = () => {
+export const Home: FC = () => {
     const month = dayjs().format('YYYY年MM月');
     const today = dayjs().format('DD');
     const startOfWeek = dayjs().startOf('week');
     const [selectedDate, setSelectedDate] = useState(today);
 
     const generateWeekList = () => {
-        let weekList = [];
+        const weekList = [];
         let date = startOfWeek;
 
         for (let i = 0; i < 7; i++) {
@@ -24,25 +24,15 @@ export const Home = () => {
 
     const week = generateWeekList();
 
-    const history = useHistory();
-    const logout = async () => {
-        try {
-            await auth.signOut();
-            history.push('/login');
-        } catch (err) {
-            alert(err.message)
-        }
-    }
-
-    const demoTrainingHistory = {
-            training: {
-                0: {
-                    type: '自分への優しさ',
-                    title: '緊張した...',
-                    url: '/worry/1'
-                },
-            }
-    }
+    // const history = useHistory();
+    // const logout = async () => {
+    //     try {
+    //         await auth.signOut();
+    //         history.push('/login');
+    //     } catch (err) {
+    //         alert(err.message)
+    //     }
+    // }
 
     const onClickDate = (day: string) => {
         setSelectedDate(day);
@@ -60,7 +50,7 @@ export const Home = () => {
             <SDivMonth>{month}</SDivMonth>
             <List horizontal style={{width: '100%'}}>
                 {week.map((day, key) => (
-                    <List.Item　key={key}>
+                    <List.Item key={key}>
                         <SListContent as='button' selectedDate={selectedDate} day={day} onClick={() => onClickDate(day)}>{day}</SListContent>
                     </List.Item>
                 ))}

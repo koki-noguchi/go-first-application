@@ -1,9 +1,14 @@
-import React, { FC } from 'react';
+import React, { FC, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Grid, Icon, Menu, Segment, Sidebar } from 'semantic-ui-react';
 import styled from 'styled-components';
 
-export const SidebarLayout: FC = ({children}) => {
+type Props = {
+    children: ReactNode
+}
+
+export const SidebarLayout: FC<Props> = (props: Props) => {
+    const { children } = props;
     const [visible, setVisible] = React.useState(window.innerWidth >= 768);
 
     return (
