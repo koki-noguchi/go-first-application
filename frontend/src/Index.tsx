@@ -33,7 +33,7 @@ const client =  new ApolloClient({
     cache: new InMemoryCache()
   });
 
-
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export default function App() {
     return(
         <ApolloProvider client={client}>

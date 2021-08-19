@@ -10,7 +10,7 @@ type Props = {
     onClickButton: (props: UserInfo) => void,
 }
 
-export const AuthCard: VFC<Props> = memo((props) => {
+export const AuthCard: VFC<Props> = memo((props: Props) => {
     const { headerName, buttonName, onClickButton } = props;
 
     const [email, setEmail] = useState('');
