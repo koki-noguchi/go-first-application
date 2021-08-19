@@ -1,11 +1,11 @@
-import React, { ChangeEvent, FormEvent, useState } from 'react';
+import React, { ChangeEvent, FC, FormEvent, useState } from 'react';
 import styled from 'styled-components'
 import { Link } from 'react-router-dom';
 import { Button, Form } from 'semantic-ui-react';
 import { useCreateWorry } from '../../hooks/worry/useCreateWorry';
 
 
-export const CreateWorry = () => {
+export const CreateWorry: FC = () => {
     const [title, setTitle] = useState('');
     const [notes, setNote] = useState('');
     const [loading, setLoading] = useState(false);
