@@ -1,8 +1,6 @@
 import React, { FC, useState } from "react";
 import dayjs from 'dayjs';
 import styled from 'styled-components'
-// import { auth } from "../../base";
-// import { useHistory } from "react-router-dom";
 import { List } from "semantic-ui-react";
 
 export const Home: FC = () => {
@@ -23,16 +21,6 @@ export const Home: FC = () => {
     }
 
     const week = generateWeekList();
-
-    // const history = useHistory();
-    // const logout = async () => {
-    //     try {
-    //         await auth.signOut();
-    //         history.push('/login');
-    //     } catch (err) {
-    //         alert(err.message)
-    //     }
-    // }
 
     const onClickDate = (day: string) => {
         setSelectedDate(day);

@@ -1,6 +1,8 @@
 import React, { FC, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Dropdown, Grid, Icon, Menu, Segment, Sidebar } from 'semantic-ui-react';
+import { auth } from "../../base";
+import { useHistory } from "react-router-dom";
 import styled from 'styled-components';
 
 type Props = {
@@ -11,8 +13,14 @@ export const SidebarLayout: FC<Props> = (props: Props) => {
     const { children } = props;
     const [visible, setVisible] = React.useState(window.innerWidth >= 768);
 
-    const handle = () => {
-        console.log('a');
+    const history = useHistory();
+    const logout = async () => {
+        try {
+            await auth.signOut();
+            history.push('/login');
+        } catch (err) {
+            alert(err.message)
+        }
     }
 
     return (
@@ -32,7 +40,7 @@ export const SidebarLayout: FC<Props> = (props: Props) => {
                     direction='left'
                 >
                     <Dropdown.Menu>
-                        <Dropdown.Item text='ログアウト' onClick={handle} />
+                        <Dropdown.Item text='ログアウト' onClick={logout} />
                     </Dropdown.Menu>
                 </SDropDown>
                 <Sidebar.Pushable as={Segment} style={{background: 'none', border: 'none', boxShadow: 'none', margin: '0px'}}>
