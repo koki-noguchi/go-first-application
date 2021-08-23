@@ -4,17 +4,15 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const Dotenv = require('dotenv-webpack');
 
 module.exports = {
-  entry: {
-    'js/app': ['./src/index.tsx'],
-  },
+  entry: './src/index.tsx',
   output: {
-    path: path.resolve(__dirname, 'dist/'),
+    path: path.resolve(__dirname, 'dist'),
     publicPath: "/",
+    filename: '[fullhash].js'
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: "src/html/index.html",
-      filename: 'index.html',
+      template: "src/html/index.html"
     }),
     new Dotenv(),
   ],

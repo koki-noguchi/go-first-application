@@ -1,21 +1,48 @@
-import React, { FC } from 'react';
+import React, { FC, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Grid, Icon, Menu, Segment, Sidebar } from 'semantic-ui-react';
+import { Dropdown, Grid, Icon, Menu, Segment, Sidebar } from 'semantic-ui-react';
+import { auth } from "../../base";
+import { useHistory } from "react-router-dom";
 import styled from 'styled-components';
 
-export const SidebarLayout: FC = ({children}) => {
+type Props = {
+    children: ReactNode
+}
+
+export const SidebarLayout: FC<Props> = (props: Props) => {
+    const { children } = props;
     const [visible, setVisible] = React.useState(window.innerWidth >= 768);
+
+    const history = useHistory();
+    const logout = async () => {
+        try {
+            await auth.signOut();
+            history.push('/login');
+        } catch (err) {
+            alert(err.message)
+        }
+    }
 
     return (
         <SGrid columns={1}>
             <Grid.Column style={{padding: '0px'}}>
-                <SIcon
+                <SIconBars
                     name='bars'
                     onClick={() => setVisible(!visible)}
                     color={'blue'}
                     size={'large'}
                     visible={visible ? 1 : 0}
                 />
+                <SDropDown
+                    button
+                    className='icon'
+                    icon='user circle'
+                    direction='left'
+                >
+                    <Dropdown.Menu>
+                        <Dropdown.Item text='ログアウト' onClick={logout} />
+                    </Dropdown.Menu>
+                </SDropDown>
                 <Sidebar.Pushable as={Segment} style={{background: 'none', border: 'none', boxShadow: 'none', margin: '0px'}}>
                     <Sidebar
                         as={Menu}
@@ -56,7 +83,7 @@ const SGrid = styled(Grid)`
     margin: 0px !important;
 `
 
-const SIcon = styled(Icon)`
+const SIconBars = styled(Icon)`
     display: none !important;
     position: absolute;
     z-index: 1;
@@ -65,4 +92,17 @@ const SIcon = styled(Icon)`
         display: block !important;
     }
     transform: ${props => props.visible && 'rotate(90deg)'};
+`
+
+const SDropDown = styled(Dropdown)`
+    padding: 5px !important;
+    border: 1px solid !important;
+    background-color: white !important;
+    position: absolute !important;
+    right: 10px !important;
+    z-index: 100 !important;
+    font-size: 1.5em !important;
+    @media (max-width: 768px) {
+        right: 0px !important;
+    }
 `
